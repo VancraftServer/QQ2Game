@@ -15,7 +15,7 @@ PLUGIN_METADATA = {
     'name': 'QQ2Game',
     'description': '群消息与游戏同步插件',
     'author': 'ShootKing233',
-    'link': 'https://github.com/VancraftServer/还没有repo',
+    'link': 'https://github.com/VancraftServer/QQ2Game/',
     'dependencies': {
         'mcdreforged': '>=1.0.0',
     },
