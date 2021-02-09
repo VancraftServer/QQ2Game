@@ -21,8 +21,8 @@ PLUGIN_METADATA = {
     },
 }
 
-RCON_CONN = RconConnection('127.0.0.1', 25575, '12345678')
-GROUP_ID = 1061192531
+RCON_CONN = RconConnection('127.0.0.1', 25575, '12345678') # 三项依次为IP,RCON端口,RCON密码
+GROUP_ID = 12345678
 
 Q2G_PREFIX = '!!q2g'
 G2Q_PREFIX = '!!g2q'
