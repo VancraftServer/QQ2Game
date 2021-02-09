@@ -39,8 +39,8 @@ bots:
 ##### Install the plugin
 
 1. Edit your `server.properties`  to turn on RCON.
-2. Fill in your RCON port and password at line 24 at  `qq2game.py`.
-3. Fill in your QQ group id at line 25 at `qq2game.py`.
+2. Fill in your RCON port and password at line 38 at  `qq2game.py`.
+3. Fill in your QQ group id at line 39 at `qq2game.py`.
 4. Copy `qq2game.py` into your MCDR plugins folder and start the server.
 5. Run OneBot Kotlin.
 
@@ -64,10 +64,10 @@ bots:
 
 ##### Command prefix
 
-You can change the prefix of the command at line 27 & 28 at `qq2game.py`.
+You can change the prefix of the command at line 41 & 42 at `qq2game.py`.
 
 ##### Default status
 
-You can change the default status of game to QQ and QQ to game at line 30 & 31 at `qq2game.py`.
+You can change the default status of game to QQ and QQ to game at line 44 & 45 at `qq2game.py`.
 
 P.S. 0 stands for off and 1 stands for on.
