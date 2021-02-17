@@ -35,19 +35,35 @@ PLUGIN_METADATA = {
     },
 }
 
+# Rcon连接
 RCON_CONN = RconConnection('127.0.0.1', 25575, '12345678') # 三项依次为IP,RCON端口,RCON密码
+# 群号
 GROUP_ID = 12345678
 
+# QQ到游戏命令前缀
 Q2G_PREFIX = '!!q2g'
+# 游戏到QQ命令前缀
 G2Q_PREFIX = '!!g2q'
 
+# QQ到游戏默认状态
 G2Q_STATUS = 0
+# 游戏到QQ默认状态
 Q2G_STATUS = 1
 
+# 机器人监听服务器
 BOT_SERVER = Flask(__name__)
 
 
-def getStatus(target):
+def get_status(target):
+    '''获取目标功能状态
+    Args:
+        target: 要获取功能的名称（字符串）
+    Returns:
+        1或0（目标当前的状态）
+    Rasies:
+        TypeError: 当参数类型不合法时
+        ValueError: 当目标不存在或目标的状态值不合法时
+    '''
     if not isinstance(target, str):
         raise TypeError
     if target not in ['q2g', 'g2q']:
@@ -62,7 +78,17 @@ def getStatus(target):
         return G2Q_STATUS
 
 
-def setStatus(target, status):
+def set_status(target, status):
+    '''设置目标功能的状态
+    Args:
+        target: 要获取功能的名称（字符串）
+        status: 要设置的状态（1或0）
+    Returns:
+        1或0（目标被设置的状态）
+    Raises:
+        TypeError: 当参数类型不合法时
+        ValueError: 当目标不存在或所要设置的状态值不合法时
+    '''
     if not isinstance(target, str) and not isinstance(status, int):
         raise TypeError
     if target not in ['q2g', 'g2q'] and status not in [0, 1]:
@@ -78,6 +104,7 @@ def setStatus(target, status):
 
 
 def on_load(server: ServerInterface, prev):
+    '''插件初始化函数'''
     if prev is not None:
         server.logger.warn('注意！本插件不能热重载，请重启服务器！')
     server.logger.info('QQ2Game正在加载')
@@ -97,13 +124,13 @@ def on_load(server: ServerInterface, prev):
             Literal('status')
             .runs(lambda src: src.reply(
                 '当前QQ->游戏功能处于{0}状态'.format(
-                    '开启' if getStatus('q2g') == 1 else '关闭')))
+                    '开启' if get_status('q2g') == 1 else '关闭')))
             .then(
                 Integer('statusId')
                 .in_range(0, 1)
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ->游戏功能设置为{0}状态'.format(
-                        '开启' if setStatus('q2g', ctx['statusId']) == 1 else '关闭'))
+                        '开启' if set_status('q2g', ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
@@ -114,24 +141,23 @@ def on_load(server: ServerInterface, prev):
             Literal('status')
             .runs(lambda src: src.reply(
                 '当前QQ<-游戏功能处于{0}状态'.format(
-                    '开启' if getStatus('g2q') == 1 else '关闭')))
+                    '开启' if get_status('g2q') == 1 else '关闭')))
             .then(
                 Integer('statusId')
                 .in_range(0, 1)
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ<-游戏功能设置为{0}状态'.format(
-                        '开启' if setStatus('g2q', ctx['statusId']) == 1 else '关闭'))
+                        '开启' if set_status('g2q', ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
     )
-    runBotServer()
+    run_bot_server()
     server.logger.info('QQ2Game加载完成')
 
-    return
 
-
-def sendMessage(server: ServerInterface, info: Info):
+def send_message(server: ServerInterface, info: Info):
+    '''QQ消息发送函数'''
     if (G2Q_STATUS == 1 and not info.content.startswith('!!') and (info.is_player or info.is_from_console)) or (
             G2Q_STATUS == 0 and info.content.startswith('!!send ') and (info.is_player or info.is_from_console)):
         sender = '<{0}> '.format(info.player if info.is_player else 'CONSOLE')
@@ -155,24 +181,21 @@ def sendMessage(server: ServerInterface, info: Info):
         except Exception as e:
             server.logger.error(e)
 
-    return
 
-
-@new_thread('Flask Thread')
-def runBotServer():
+@new_thread('FlaskThread')
+def run_bot_server():
+    '''将监听服务器放在新线程运行'''
     BOT_SERVER.run(port=5701)
-
-    return
 
 
 def on_info(server: ServerInterface, info: Info):
-    sendMessage(server, info)
-
-    return
+    '''插件消息处理函数'''
+    send_message(server, info)
 
 
 @BOT_SERVER.route('/plugin', methods=['POST'])
-def onRecv():
+def on_recv():
+    '''QQ消息处理函数'''
     try:
         data = request.get_data().decode('utf-8')
         dataDict = json.loads(data)
