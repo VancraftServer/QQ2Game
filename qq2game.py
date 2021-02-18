@@ -1,17 +1,18 @@
-'''
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+# Copyright (c) 2021 Vancraft Team
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
 import requests
 import json
 import re
@@ -36,7 +37,8 @@ PLUGIN_METADATA = {
 }
 
 # Rcon连接
-RCON_CONN = RconConnection('127.0.0.1', 25575, '12345678') # 三项依次为IP,RCON端口,RCON密码
+RCON_CONN = RconConnection(
+    '127.0.0.1', 25575, '12345678')  # 三项依次为IP,RCON端口,RCON密码
 # 群号
 GROUP_ID = 12345678
 
@@ -106,18 +108,26 @@ def set_status(target, status):
 def on_load(server: ServerInterface, prev):
     '''插件初始化函数'''
     if prev is not None:
+        # 若插件非第一次加载，发出警告
         server.logger.warn('注意！本插件不能热重载，请重启服务器！')
+
     server.logger.info('QQ2Game正在加载')
+
+    # 注册帮助信息
     server.register_help_message(
         Q2G_PREFIX,
         '''{0} status -- 查看当前QQ->游戏功能是否打开
-        {1} status <0/1> -- 打开/关闭QQ->游戏功能(0:关闭/1:打开)'''.format(Q2G_PREFIX, Q2G_PREFIX)
+        {1} status <0/1> -- 打开/关闭QQ->游戏功能(0:关闭/1:打开)'''.format(
+            Q2G_PREFIX, Q2G_PREFIX)
     )
     server.register_help_message(
         G2Q_PREFIX,
         '''{0} status -- 查看当前QQ<-游戏功能是否打开
-        {1} status <0/1> -- 打开/关闭QQ<-游戏功能(0:关闭/1:打开)'''.format(G2Q_PREFIX, G2Q_PREFIX)
+        {1} status <0/1> -- 打开/关闭QQ<-游戏功能(0:关闭/1:打开)'''.format(
+            G2Q_PREFIX, G2Q_PREFIX)
     )
+
+    # 注册命令
     server.register_command(
         Literal(Q2G_PREFIX)
         .then(
@@ -130,7 +140,8 @@ def on_load(server: ServerInterface, prev):
                 .in_range(0, 1)
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ->游戏功能设置为{0}状态'.format(
-                        '开启' if set_status('q2g', ctx['statusId']) == 1 else '关闭'))
+                        '开启' if set_status('q2g',
+                        ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
@@ -147,38 +158,59 @@ def on_load(server: ServerInterface, prev):
                 .in_range(0, 1)
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ<-游戏功能设置为{0}状态'.format(
-                        '开启' if set_status('g2q', ctx['statusId']) == 1 else '关闭'))
+                        '开启' if set_status('g2q',
+                        ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
     )
+
+    # 创建机器人监听线程
     run_bot_server()
+
     server.logger.info('QQ2Game加载完成')
 
 
 def send_message(server: ServerInterface, info: Info):
     '''QQ消息发送函数'''
-    if (G2Q_STATUS == 1 and not info.content.startswith('!!') and (info.is_player or info.is_from_console)) or (
-            G2Q_STATUS == 0 and info.content.startswith('!!send ') and (info.is_player or info.is_from_console)):
+    # 判断是否发送消息以及消息是否为玩家或控制台发出
+    if (G2Q_STATUS == 1 and not info.content.startswith('!!') and
+            (info.is_player or info.is_from_console)) or (
+            G2Q_STATUS == 0 and info.content.startswith('!!send ') and
+            (info.is_player or info.is_from_console)):
+
+        # 发送者ID（若为控制台则为CONSOLE）
         sender = '<{0}> '.format(info.player if info.is_player else 'CONSOLE')
+
+        # 若为手动发送则截取发送内容
         if info.content.startswith('!!send '):
             msg = sender + info.content[7::]
         else:
             msg = sender + info.content
+        
+        # 消息荷载
         payload = {
             'group_id': GROUP_ID,
             'message': msg,
             'auto_escape': False,
         }
+
         try:
+            # 请求消息发送API
             response = requests.post(
                 'http://127.0.0.1:5700/send_group_msg', data=payload)
+
             if response.status_code == 200:
-                responseDict = json.loads(response.text)
-                messageId = responseDict['data']['message_id']
-                infoMsg = 'ID为' + str(messageId) + '的消息发送成功:' + response.text
-                server.logger.info(infoMsg)
+                # 将返回数据解析为字典
+                response_dict = json.loads(response.text)
+                # 消息ID
+                message_id = response_dict['data']['message_id']
+                # 向控制台发送消息发送日志
+                info_msg = 'ID为{0}的消息发送成功:{1}'.format(
+                    str(message_id), response.text)
+                server.logger.info(info_msg)
         except Exception as e:
+            # 若发送异常就向控制台报错
             server.logger.error(e)
 
 
@@ -197,30 +229,37 @@ def on_info(server: ServerInterface, info: Info):
 def on_recv():
     '''QQ消息处理函数'''
     try:
+        # 将上报的数据解析为字符串
         data = request.get_data().decode('utf-8')
-        dataDict = json.loads(data)
-        if 'message_type' in dataDict:
-            if dataDict['group_id'] == GROUP_ID:
-                raw_msg = dataDict['raw_message']
+        # 将数据字符串解析为字典
+        data_dict = json.loads(data)
+        # 判断该数据是否为群消息
+        if 'message_type' in data_dict and 'group_id' in data_dict:
+            # 判断该消息是否为所监听的群的消息
+            if data_dict['group_id'] == GROUP_ID:
+                # 原始消息
+                raw_msg = data_dict['raw_message']
+
+                # 将特殊消息内容解析
                 if not re.search(r'\[CQ:at,qq=.+?\]', raw_msg) is None:
                     tmp = raw_msg
-                    memberId = re.findall(
+                    member_id = re.findall(
                         r'\[CQ:at,qq=.+?\]',
                         tmp)[0].replace(
                         '[CQ:at,qq=',
                         '').replace(
                         ']',
                         '')
-                    memberNick = json.loads(
+                    member_nick = json.loads(
                         requests.post(
                             'http://127.0.0.1:5700/get_group_member_info',
                             data={
                                 'group_id': GROUP_ID,
-                                'user_id': memberId,
+                                'user_id': member_id,
                                 'no_cache': True,
                             }).text)['data']['card']
                     raw_msg = re.sub(r'\[CQ:at,qq.+?\]',
-                                     '§e[@' + memberNick + ']§r', tmp)
+                                     '§e[@' + member_nick + ']§r', tmp)
                 if not re.search(r'\[CQ:image,file=.+?\]', raw_msg) is None:
                     tmp = raw_msg
                     raw_msg = re.sub(
@@ -246,13 +285,21 @@ def on_recv():
                 if not re.search(r'\[CQ:json,.+?\]', raw_msg) is None:
                     tmp = raw_msg
                     raw_msg = re.sub(r'\[CQ:json,.+?\]', '§e[JSON消息]§r', tmp)
-                command = 'tellraw @a "§d[QQ群]§3' + \
-                    dataDict['sender']['card'] + '§r : ' + raw_msg + '"'
+
+                # 拼接命令
+                command = 'tellraw @a "§d[QQ群]§3{0}§r : {1}"'.format(
+                    data_dict['sender']['card'], raw_msg)
+                
+                # 判断是否要将群消息转发至游戏
                 if Q2G_STATUS == 1:
+                    # 尝试连接RCON服务器
                     conn = RCON_CONN.connect()
+                    # 如果连接成功
                     if conn:
+                        # 发送命令并断开连接
                         RCON_CONN.send_command(command)
                         RCON_CONN.disconnect()
     except Exception as e:
+        # 若发送异常就向控制台报错
         print('[BOT_SERVER] ' + str(e))
     return ''
