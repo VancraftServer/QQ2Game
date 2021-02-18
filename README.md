@@ -76,4 +76,4 @@ P.S. 0 stands for off and 1 stands for on.
 
 ### License
 
-This plugin is lincensed under the [GNU General Public License](LICENSE).
+This plugin is licensed under the [GNU General Public License](LICENSE).
