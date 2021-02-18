@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import requests
 import json
 import re
+import requests
 
 from flask import Flask, request
 
@@ -71,13 +71,14 @@ def get_status(target):
     if target not in ['q2g', 'g2q']:
         raise ValueError
     if target == 'q2g':
-        if not Q2G_STATUS == 1 and not Q2G_STATUS == 0:
+        if Q2G_STATUS not in (1, 0):
             raise ValueError
         return Q2G_STATUS
     if target == 'g2q':
-        if not G2Q_STATUS == 1 and not G2Q_STATUS == 0:
+        if G2Q_STATUS not in (1, 0):
             raise ValueError
         return G2Q_STATUS
+    return -1
 
 
 def set_status(target, status):
@@ -103,6 +104,7 @@ def set_status(target, status):
         global G2Q_STATUS
         G2Q_STATUS = status
         return G2Q_STATUS
+    return -1
 
 
 def on_load(server: ServerInterface, prev):
@@ -141,7 +143,7 @@ def on_load(server: ServerInterface, prev):
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ->游戏功能设置为{0}状态'.format(
                         '开启' if set_status('q2g',
-                        ctx['statusId']) == 1 else '关闭'))
+                                           ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
@@ -159,7 +161,7 @@ def on_load(server: ServerInterface, prev):
                 .runs(lambda src, ctx: src.reply(
                     '已将QQ<-游戏功能设置为{0}状态'.format(
                         '开启' if set_status('g2q',
-                        ctx['statusId']) == 1 else '关闭'))
+                                           ctx['statusId']) == 1 else '关闭'))
                       )
             )
         )
@@ -187,7 +189,7 @@ def send_message(server: ServerInterface, info: Info):
             msg = sender + info.content[7::]
         else:
             msg = sender + info.content
-        
+
         # 消息荷载
         payload = {
             'group_id': GROUP_ID,
@@ -289,7 +291,7 @@ def on_recv():
                 # 拼接命令
                 command = 'tellraw @a "§d[QQ群]§3{0}§r : {1}"'.format(
                     data_dict['sender']['card'], raw_msg)
-                
+
                 # 判断是否要将群消息转发至游戏
                 if Q2G_STATUS == 1:
                     # 尝试连接RCON服务器
