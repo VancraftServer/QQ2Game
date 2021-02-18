@@ -38,7 +38,7 @@ PLUGIN_METADATA = {
 
 # Rcon连接
 RCON_CONN = RconConnection(
-    '127.0.0.1', 25575, '12345678')  # 三项依次为IP,RCON端口,RCON密码
+    address='127.0.0.1', port=25575, password='12345678')
 # 群号
 GROUP_ID = 12345678
 
