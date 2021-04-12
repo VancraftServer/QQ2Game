@@ -300,7 +300,7 @@ def on_recv():
 
 @BOT_SERVER.route('/plugin/stop', methods=['POST'])
 def on_bot_server_stop():
-    """"""
+    """关闭Flask线程"""
     _func = request.environ.get('werkzeug.server.shutdown')
     if _func is None:
         raise RuntimeError

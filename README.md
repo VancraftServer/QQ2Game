@@ -1,7 +1,9 @@
 # QQ2Game
+**English** | [中文](README_CN.md)
+
 An MCDR plugin that synchronizes QQ messages to the game.
 
-# **!!DO NOT RELOAD THIS PLUGIN WHILE THE SERVER IS STILL RUNNING!!**
+# **!!DO NOT RELOAD THIS PLUGIN VERY OFTEN WHILE THE SERVER IS STILL RUNNING!!**
 
 # Usages
 
@@ -10,10 +12,8 @@ An MCDR plugin that synchronizes QQ messages to the game.
 ##### Requirements
 
 1. Flask   `pip3 install flask`
-
 2. Requests `pip3 install request`
 3. MCDReforged >= 1.0.0 `pip3 install mcdreforged`
-
 4. [OneBot Kotlin](https://github.com/yyuueexxiinngg/onebot-kotlin)
 
 ##### Configure OneBot Kotlin
@@ -39,10 +39,9 @@ bots:
 ##### Install the plugin
 
 1. Edit your `server.properties`  to turn on RCON.
-2. Fill in your RCON port and password at line 41 at  `qq2game.py`.
-3. Fill in your QQ group id at line 43 at `qq2game.py`.
-4. Copy `qq2game.py` into your MCDR plugins folder and start the server.
-5. Run OneBot Kotlin.
+2. Config your RCON password and listening group id in the dictionary variable `CONFIGURES` at `qq2game.py`.
+3. Copy `qq2game.py` into your MCDR plugins folder and start the server.
+4. Run OneBot Kotlin.
 
 ##### Enjoy
 
@@ -62,13 +61,7 @@ bots:
 
 ### Config
 
-##### Command prefix
-
-You can change the prefix of the command at line 46 & 48 at `qq2game.py`.
-
-##### Default status
-
-You can change the default status of game to QQ and QQ to game at line 51 & 53 at `qq2game.py`.
+You can change the prefix of the command and the default status of game to QQ and QQ to game in the dictionary variable `CONFIGURES` at `qq2game.py`.
 
 P.S. 0 stands for off and 1 stands for on.
 
