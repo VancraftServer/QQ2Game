@@ -1,17 +1,20 @@
-# Copyright (c) 2021 Vancraft Team
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""An MCDR plugin that synchronizes QQ messages to the game.
+
+Copyright (c) 2021 Vancraft Team
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import json
 import re
@@ -23,6 +26,28 @@ from mcdreforged.api.types import ServerInterface, Info
 from mcdreforged.api.command import Literal, Integer
 from mcdreforged.api.rcon import RconConnection
 from mcdreforged.api.decorator import new_thread
+
+# 请在此处配置具体参数
+CONFIGURES = {
+    # Rcon连接
+    'RCON_CONN':
+        RconConnection(address='127.0.0.1', port=25575, password='12345678'),
+    # 群号
+    'GROUP_ID':
+        12345678,
+    # QQ到游戏命令前缀
+    'Q2G_PREFIX':
+        '!!q2g',
+    # 游戏到QQ命令前缀
+    'G2Q_PREFIX':
+        '!!g2q',
+    # QQ到游戏默认状态
+    'Q2G_STATUS':
+        1,
+    # 游戏到QQ命令前缀
+    'G2Q_STATUS':
+        0,
+}
 
 PLUGIN_METADATA = {
     'id': 'q2g',
@@ -36,28 +61,19 @@ PLUGIN_METADATA = {
     },
 }
 
-# Rcon连接
-RCON_CONN = RconConnection(
-    address='127.0.0.1', port=25575, password='12345678')
-# 群号
-GROUP_ID = 12345678
-
-# QQ到游戏命令前缀
-Q2G_PREFIX = '!!q2g'
-# 游戏到QQ命令前缀
-G2Q_PREFIX = '!!g2q'
-
-# QQ到游戏默认状态
-G2Q_STATUS = 0
-# 游戏到QQ默认状态
-Q2G_STATUS = 1
+RCON_CONN = CONFIGURES['RCON_CONN']
+GROUP_ID = CONFIGURES['GROUP_ID']
+Q2G_PREFIX = CONFIGURES['Q2G_PREFIX']
+G2Q_PREFIX = CONFIGURES['G2Q_PREFIX']
+Q2G_STATUS = CONFIGURES['Q2G_STATUS']
+G2Q_STATUS = CONFIGURES['G2Q_STATUS']
 
 # 机器人监听服务器
 BOT_SERVER = Flask(__name__)
 
 
 def get_status(target):
-    '''获取目标功能状态
+    """获取目标功能状态
     Args:
         target: 要获取功能的名称（字符串）
     Returns:
@@ -65,7 +81,7 @@ def get_status(target):
     Rasies:
         TypeError: 当参数类型不合法时
         ValueError: 当目标不存在或目标的状态值不合法时
-    '''
+    """
     if not isinstance(target, str):
         raise TypeError
     if target not in ['q2g', 'g2q']:
@@ -82,7 +98,7 @@ def get_status(target):
 
 
 def set_status(target, status):
-    '''设置目标功能的状态
+    """设置目标功能的状态
     Args:
         target: 要获取功能的名称（字符串）
         status: 要设置的状态（1或0）
@@ -91,7 +107,7 @@ def set_status(target, status):
     Raises:
         TypeError: 当参数类型不合法时
         ValueError: 当目标不存在或所要设置的状态值不合法时
-    '''
+    """
     if not isinstance(target, str) and not isinstance(status, int):
         raise TypeError
     if target not in ['q2g', 'g2q'] and status not in [0, 1]:
@@ -107,65 +123,43 @@ def set_status(target, status):
     return -1
 
 
-def on_load(server: ServerInterface, prev):
-    '''插件初始化函数'''
-    if prev is not None:
-        # 若插件非第一次加载，发出警告
-        server.logger.warn('注意！本插件不能热重载，请重启服务器！')
+def on_unload(server: ServerInterface):
+    requests.post('http://127.0.0.1:5701/plugin/stop')
 
+
+def on_load(server: ServerInterface, prev):
+    """插件初始化函数"""
     server.logger.info('QQ2Game正在加载')
 
     # 注册帮助信息
     server.register_help_message(
-        Q2G_PREFIX,
-        '''{0} status -- 查看当前QQ->游戏功能是否打开
+        Q2G_PREFIX, '''{0} status -- 查看当前QQ->游戏功能是否打开
         {1} status <0/1> -- 打开/关闭QQ->游戏功能(0:关闭/1:打开)'''.format(
-            Q2G_PREFIX, Q2G_PREFIX)
-    )
+            Q2G_PREFIX, Q2G_PREFIX))
     server.register_help_message(
-        G2Q_PREFIX,
-        '''{0} status -- 查看当前QQ<-游戏功能是否打开
+        G2Q_PREFIX, '''{0} status -- 查看当前QQ<-游戏功能是否打开
         {1} status <0/1> -- 打开/关闭QQ<-游戏功能(0:关闭/1:打开)'''.format(
-            G2Q_PREFIX, G2Q_PREFIX)
-    )
+            G2Q_PREFIX, G2Q_PREFIX))
 
     # 注册命令
     server.register_command(
-        Literal(Q2G_PREFIX)
-        .then(
-            Literal('status')
-            .runs(lambda src: src.reply(
-                '当前QQ->游戏功能处于{0}状态'.format(
-                    '开启' if get_status('q2g') == 1 else '关闭')))
-            .then(
-                Integer('statusId')
-                .in_range(0, 1)
-                .runs(lambda src, ctx: src.reply(
-                    '已将QQ->游戏功能设置为{0}状态'.format(
-                        '开启' if set_status('q2g',
-                                           ctx['statusId']) == 1 else '关闭'))
-                      )
-            )
-        )
-    )
+        Literal(Q2G_PREFIX).then(
+            Literal('status').runs(
+                lambda src: src.reply('当前QQ->游戏功能处于{0}状态'.format(
+                    '开启' if get_status('q2g') == 1 else '关闭'))).then(
+                        Integer('statusId').in_range(
+                            0, 1).runs(lambda src, ctx: src.reply(
+                                '已将QQ->游戏功能设置为{0}状态'.format('开启' if set_status(
+                                    'q2g', ctx['statusId']) == 1 else '关闭'))))))
     server.register_command(
-        Literal(G2Q_PREFIX)
-        .then(
-            Literal('status')
-            .runs(lambda src: src.reply(
-                '当前QQ<-游戏功能处于{0}状态'.format(
-                    '开启' if get_status('g2q') == 1 else '关闭')))
-            .then(
-                Integer('statusId')
-                .in_range(0, 1)
-                .runs(lambda src, ctx: src.reply(
-                    '已将QQ<-游戏功能设置为{0}状态'.format(
-                        '开启' if set_status('g2q',
-                                           ctx['statusId']) == 1 else '关闭'))
-                      )
-            )
-        )
-    )
+        Literal(G2Q_PREFIX).then(
+            Literal('status').runs(
+                lambda src: src.reply('当前QQ<-游戏功能处于{0}状态'.format(
+                    '开启' if get_status('g2q') == 1 else '关闭'))).then(
+                        Integer('statusId').in_range(
+                            0, 1).runs(lambda src, ctx: src.reply(
+                                '已将QQ<-游戏功能设置为{0}状态'.format('开启' if set_status(
+                                    'g2q', ctx['statusId']) == 1 else '关闭'))))))
 
     # 创建机器人监听线程
     run_bot_server()
@@ -174,10 +168,10 @@ def on_load(server: ServerInterface, prev):
 
 
 def send_message(server: ServerInterface, info: Info):
-    '''QQ消息发送函数'''
+    """QQ消息发送函数"""
     # 判断是否发送消息以及消息是否为玩家或控制台发出
     if (G2Q_STATUS == 1 and not info.content.startswith('!!') and
-            (info.is_player or info.is_from_console)) or (
+        (info.is_player or info.is_from_console)) or (
             G2Q_STATUS == 0 and info.content.startswith('!!send ') and
             (info.is_player or info.is_from_console)):
 
@@ -199,8 +193,8 @@ def send_message(server: ServerInterface, info: Info):
 
         try:
             # 请求消息发送API
-            response = requests.post(
-                'http://127.0.0.1:5700/send_group_msg', data=payload)
+            response = requests.post('http://127.0.0.1:5700/send_group_msg',
+                                     data=payload)
 
             if response.status_code == 200:
                 # 将返回数据解析为字典
@@ -208,8 +202,8 @@ def send_message(server: ServerInterface, info: Info):
                 # 消息ID
                 message_id = response_dict['data']['message_id']
                 # 向控制台发送消息发送日志
-                info_msg = 'ID为{0}的消息发送成功:{1}'.format(
-                    str(message_id), response.text)
+                info_msg = 'ID为{0}的消息发送成功:{1}'.format(str(message_id),
+                                                      response.text)
                 server.logger.info(info_msg)
         except Exception as e:
             # 若发送异常就向控制台报错
@@ -218,18 +212,18 @@ def send_message(server: ServerInterface, info: Info):
 
 @new_thread('FlaskThread')
 def run_bot_server():
-    '''将监听服务器放在新线程运行'''
+    """将监听服务器放在新线程运行"""
     BOT_SERVER.run(port=5701)
 
 
 def on_info(server: ServerInterface, info: Info):
-    '''插件消息处理函数'''
+    """插件消息处理函数"""
     send_message(server, info)
 
 
 @BOT_SERVER.route('/plugin', methods=['POST'])
 def on_recv():
-    '''QQ消息处理函数'''
+    """QQ消息处理函数"""
     try:
         # 将上报的数据解析为字符串
         data = request.get_data().decode('utf-8')
@@ -245,13 +239,9 @@ def on_recv():
                 # 将特殊消息内容解析
                 if not re.search(r'\[CQ:at,qq=.+?\]', raw_msg) is None:
                     tmp = raw_msg
-                    member_id = re.findall(
-                        r'\[CQ:at,qq=.+?\]',
-                        tmp)[0].replace(
-                        '[CQ:at,qq=',
-                        '').replace(
-                        ']',
-                        '')
+                    member_id = re.findall(r'\[CQ:at,qq=.+?\]',
+                                           tmp)[0].replace('[CQ:at,qq=',
+                                                           '').replace(']', '')
                     member_nick = json.loads(
                         requests.post(
                             'http://127.0.0.1:5700/get_group_member_info',
@@ -264,8 +254,7 @@ def on_recv():
                                      '§e[@' + member_nick + ']§r', tmp)
                 if not re.search(r'\[CQ:image,file=.+?\]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(
-                        r'\[CQ:image,file=.+?\]', '§e[图片]§r', tmp)
+                    raw_msg = re.sub(r'\[CQ:image,file=.+?\]', '§e[图片]§r', tmp)
                 if not re.search(r'\[CQ:record,.+?\]', raw_msg) is None:
                     tmp = raw_msg
                     raw_msg = re.sub(r'\[CQ:record,.+?\]', '§e[语音]§r', tmp)
@@ -305,3 +294,12 @@ def on_recv():
         # 若发送异常就向控制台报错
         print('[BOT_SERVER] ' + str(e))
     return ''
+
+
+@BOT_SERVER.route('/plugin/stop', methods=['POST'])
+def on_bot_server_stop():
+    """"""
+    _func = request.environ.get('werkzeug.server.shutdown')
+    if _func is None:
+        raise RuntimeError
+    _func()
