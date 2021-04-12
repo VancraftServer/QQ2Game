@@ -51,7 +51,7 @@ CONFIGURES = {
 
 PLUGIN_METADATA = {
     'id': 'q2g',
-    'version': '0.0.0',
+    'version': '1.0.0',
     'name': 'QQ2Game',
     'description': '群消息与游戏同步插件',
     'author': 'ShootKing233',
@@ -124,7 +124,9 @@ def set_status(target, status):
 
 
 def on_unload(server: ServerInterface):
+    server.logger.info('QQ2Game正在卸载')
     requests.post('http://127.0.0.1:5701/plugin/stop')
+    server.logger.info('QQ2Game卸载完成')
 
 
 def on_load(server: ServerInterface, prev):
@@ -303,3 +305,4 @@ def on_bot_server_stop():
     if _func is None:
         raise RuntimeError
     _func()
+    return ''
