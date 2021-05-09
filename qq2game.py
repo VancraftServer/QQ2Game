@@ -1,6 +1,6 @@
 """An MCDR plugin that synchronizes QQ messages to the game.
 
-Copyright (c) 2021 Vancraft Team
+Copyright © 2021 Vancraft Team
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import re
+
 import requests
-
 from flask import Flask, request
-
-from mcdreforged.api.types import ServerInterface, Info
 from mcdreforged.api.command import Literal, Integer
-from mcdreforged.api.rcon import RconConnection
 from mcdreforged.api.decorator import new_thread
+from mcdreforged.api.rcon import RconConnection
+from mcdreforged.api.types import ServerInterface, Info
 
 # 请在此处配置具体参数
 CONFIGURES = {
@@ -51,7 +50,7 @@ CONFIGURES = {
 
 PLUGIN_METADATA = {
     'id': 'q2g',
-    'version': '1.0.0',
+    'version': '1.1.2',
     'name': 'QQ2Game',
     'description': '群消息与游戏同步插件',
     'author': 'ShootKing233',
@@ -78,7 +77,7 @@ def get_status(target):
         target: 要获取功能的名称（字符串）
     Returns:
         1或0（目标当前的状态）
-    Rasies:
+    Raises:
         TypeError: 当参数类型不合法时
         ValueError: 当目标不存在或目标的状态值不合法时
     """
@@ -129,7 +128,7 @@ def on_unload(server: ServerInterface):
     server.logger.info('QQ2Game卸载完成')
 
 
-def on_load(server: ServerInterface, prev):
+def on_load(server: ServerInterface, _prev):
     """插件初始化函数"""
     server.logger.info('QQ2Game正在加载')
 
@@ -149,19 +148,20 @@ def on_load(server: ServerInterface, prev):
             Literal('status').runs(
                 lambda src: src.reply('当前QQ->游戏功能处于{0}状态'.format(
                     '开启' if get_status('q2g') == 1 else '关闭'))).then(
-                        Integer('statusId').in_range(
-                            0, 1).runs(lambda src, ctx: src.reply(
-                                '已将QQ->游戏功能设置为{0}状态'.format('开启' if set_status(
-                                    'q2g', ctx['statusId']) == 1 else '关闭'))))))
+                Integer('statusId').in_range(0, 1).runs(lambda src, ctx: src.reply(
+                    '已将QQ->游戏功能设置为{0}状态'.format('开启' if set_status('q2g', ctx['statusId']) == 1 else '关闭'))))))
     server.register_command(
         Literal(G2Q_PREFIX).then(
             Literal('status').runs(
                 lambda src: src.reply('当前QQ<-游戏功能处于{0}状态'.format(
                     '开启' if get_status('g2q') == 1 else '关闭'))).then(
-                        Integer('statusId').in_range(
-                            0, 1).runs(lambda src, ctx: src.reply(
-                                '已将QQ<-游戏功能设置为{0}状态'.format('开启' if set_status(
-                                    'g2q', ctx['statusId']) == 1 else '关闭'))))))
+                Integer('statusId').in_range(0, 1).runs(lambda src, ctx: src.reply(
+                    '已将QQ<-游戏功能设置为{0}状态'.format('开启' if set_status('g2q', ctx['statusId']) == 1 else '关闭'))))))
+
+    server.register_command(Literal(Q2G_PREFIX).runs(
+        lambda src: src.reply('请使用!!{0} status或!!{0} status <0/1>'.format(Q2G_PREFIX, Q2G_PREFIX))))
+    server.register_command(Literal(G2Q_PREFIX).runs(
+        lambda src: src.reply('请使用!!{0} status或!!{0} status <0/1>'.format(G2Q_PREFIX, G2Q_PREFIX))))
 
     # 创建机器人监听线程
     run_bot_server()
@@ -239,9 +239,9 @@ def on_recv():
                 raw_msg = data_dict['raw_message']
 
                 # 将特殊消息内容解析
-                if not re.search(r'\[CQ:at,qq=.+?\]', raw_msg) is None:
+                if not re.search(r'\[CQ:at,qq=.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    member_id = re.findall(r'\[CQ:at,qq=.+?\]',
+                    member_id = re.findall(r'\[CQ:at,qq=.+?]',
                                            tmp)[0].replace('[CQ:at,qq=',
                                                            '').replace(']', '')
                     member_nick = json.loads(
@@ -252,32 +252,32 @@ def on_recv():
                                 'user_id': member_id,
                                 'no_cache': True,
                             }).text)['data']['card']
-                    raw_msg = re.sub(r'\[CQ:at,qq.+?\]',
+                    raw_msg = re.sub(r'\[CQ:at,qq.+?]',
                                      '§e[@' + member_nick + ']§r', tmp)
-                if not re.search(r'\[CQ:image,file=.+?\]', raw_msg) is None:
+                if not re.search(r'\[CQ:image,file=.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:image,file=.+?\]', '§e[图片]§r', tmp)
-                if not re.search(r'\[CQ:record,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:image,file=.+?]', '§e[图片]§r', tmp)
+                if not re.search(r'\[CQ:record,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:record,.+?\]', '§e[语音]§r', tmp)
-                if not re.search(r'\[CQ:face,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:record,.+?]', '§e[语音]§r', tmp)
+                if not re.search(r'\[CQ:face,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:face,.+?\]', '§e[表情]§r', tmp)
-                if not re.search(r'\[CQ:emoji,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:face,.+?]', '§e[表情]§r', tmp)
+                if not re.search(r'\[CQ:emoji,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:emoji,.+?\]', '§e[表情]§r', tmp)
-                if not re.search(r'\[CQ:share,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:emoji,.+?]', '§e[表情]§r', tmp)
+                if not re.search(r'\[CQ:share,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:share,.+?\]', '§e[分享]§r', tmp)
-                if not re.search(r'\[CQ:music,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:share,.+?]', '§e[分享]§r', tmp)
+                if not re.search(r'\[CQ:music,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:music,.+?\]', '§e[音乐]§r', tmp)
-                if not re.search(r'\[CQ:xml,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:music,.+?]', '§e[音乐]§r', tmp)
+                if not re.search(r'\[CQ:xml,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:xml,.+?\]', '§e[XML消息]§r', tmp)
-                if not re.search(r'\[CQ:json,.+?\]', raw_msg) is None:
+                    raw_msg = re.sub(r'\[CQ:xml,.+?]', '§e[XML消息]§r', tmp)
+                if not re.search(r'\[CQ:json,.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    raw_msg = re.sub(r'\[CQ:json,.+?\]', '§e[JSON消息]§r', tmp)
+                    raw_msg = re.sub(r'\[CQ:json,.+?]', '§e[JSON消息]§r', tmp)
 
                 # 拼接命令
                 command = 'tellraw @a "§d[QQ群]§3{0}§r : {1}"'.format(
