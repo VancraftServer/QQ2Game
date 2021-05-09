@@ -1,4 +1,5 @@
 # QQ2Game
+
 [English](README.md) | **中文**
 
 一个将QQ消息与游戏同步的MCDR插件。
@@ -22,9 +23,9 @@
 
 ```yaml
 proxy: ''
-bots: 
-  123456789: 
-    http: 
+bots:
+  123456789:
+    http:
       enable: true
       host: 127.0.0.1
       port: 5700
@@ -33,7 +34,7 @@ bots:
       postMessageFormat: string
       secret: ''
       timeout: 0
-    
+
 ```
 
 ##### 安装插件
@@ -54,9 +55,12 @@ bots:
 - 使用 `!!q2g status` 获取当前QQ到游戏功能状态。
 
 - 使用 `!!q2g status <0/1>` 设置当前QQ到游戏功能状态。
+
 ##### !!g2q
+
 - 使用 `!!g2q status` 获取当前游戏到QQ功能状态。
 - 使用 `!!g2q status <0/1>` 设置当前游戏到QQ功能状态。
+
 ***
 
 ### 配置

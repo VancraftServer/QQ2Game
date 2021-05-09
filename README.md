@@ -1,4 +1,5 @@
 # QQ2Game
+
 **English** | [中文](README_CN.md)
 
 An MCDR plugin that synchronizes QQ messages to the game.
@@ -22,9 +23,9 @@ Edit you `setting.yml`(usually at `.../config/OneBot/settings.yml`) like this
 
 ```yaml
 proxy: ''
-bots: 
-  123456789: 
-    http: 
+bots:
+  123456789:
+    http:
       enable: true
       host: 127.0.0.1
       port: 5700
@@ -33,7 +34,7 @@ bots:
       postMessageFormat: string
       secret: ''
       timeout: 0
-    
+
 ```
 
 ##### Install the plugin
@@ -54,14 +55,18 @@ bots:
 - Use `!!q2g status` to get current status of QQ to game.
 
 - Use `!!q2g status <0/1>` to set current status of QQ to game.
+
 ##### !!g2q
+
 - Use `!!g2q status` to get current status of game to QQ.
 - Use `!!g2q status <0/1>` to set current status of game to QQ.
+
 ***
 
 ### Config
 
-You can change the prefix of the command and the default status of game to QQ and QQ to game in the dictionary variable `CONFIGURES` at `qq2game.py`.
+You can change the prefix of the command and the default status of game to QQ and QQ to game in the dictionary
+variable `CONFIGURES` at `qq2game.py`.
 
 P.S. 0 stands for off and 1 stands for on.
 
