@@ -50,7 +50,7 @@ CONFIGURES = {
 
 PLUGIN_METADATA = {
     'id': 'q2g',
-    'version': '1.1.2',
+    'version': '1.1.3',
     'name': 'QQ2Game',
     'description': '群消息与游戏同步插件',
     'author': 'ShootKing233',
@@ -145,23 +145,31 @@ def on_load(server: ServerInterface, _prev):
     # 注册命令
     server.register_command(
         Literal(Q2G_PREFIX).then(
-            Literal('status').runs(
-                lambda src: src.reply('当前QQ->游戏功能处于{0}状态'.format(
-                    '开启' if get_status('q2g') == 1 else '关闭'))).then(
-                Integer('statusId').in_range(0, 1).runs(lambda src, ctx: src.reply(
-                    '已将QQ->游戏功能设置为{0}状态'.format('开启' if set_status('q2g', ctx['statusId']) == 1 else '关闭'))))))
+            Literal('status').
+            runs(lambda src: src.reply('当前QQ->游戏功能处于{0}状态'.format(
+                '开启' if get_status('q2g') == 1 else '关闭'))).then(
+                    Integer('statusId').in_range(
+                        0, 1).runs(lambda src, ctx: src.reply(
+                            '已将QQ->游戏功能设置为{0}状态'.format('开启' if set_status(
+                                'q2g', ctx['statusId']) == 1 else '关闭'))))))
     server.register_command(
         Literal(G2Q_PREFIX).then(
-            Literal('status').runs(
-                lambda src: src.reply('当前QQ<-游戏功能处于{0}状态'.format(
-                    '开启' if get_status('g2q') == 1 else '关闭'))).then(
-                Integer('statusId').in_range(0, 1).runs(lambda src, ctx: src.reply(
-                    '已将QQ<-游戏功能设置为{0}状态'.format('开启' if set_status('g2q', ctx['statusId']) == 1 else '关闭'))))))
+            Literal('status').
+            runs(lambda src: src.reply('当前QQ<-游戏功能处于{0}状态'.format(
+                '开启' if get_status('g2q') == 1 else '关闭'))).then(
+                    Integer('statusId').in_range(
+                        0, 1).runs(lambda src, ctx: src.reply(
+                            '已将QQ<-游戏功能设置为{0}状态'.format('开启' if set_status(
+                                'g2q', ctx['statusId']) == 1 else '关闭'))))))
 
-    server.register_command(Literal(Q2G_PREFIX).runs(
-        lambda src: src.reply('请使用!!{0} status或!!{0} status <0/1>'.format(Q2G_PREFIX, Q2G_PREFIX))))
-    server.register_command(Literal(G2Q_PREFIX).runs(
-        lambda src: src.reply('请使用!!{0} status或!!{0} status <0/1>'.format(G2Q_PREFIX, G2Q_PREFIX))))
+    server.register_command(
+        Literal(Q2G_PREFIX).runs(
+            lambda src: src.reply('请使用!!{0} status或!!{1} status <0/1>'.format(
+                Q2G_PREFIX, Q2G_PREFIX))))
+    server.register_command(
+        Literal(G2Q_PREFIX).runs(
+            lambda src: src.reply('请使用!!{0} status或!!{1} status <0/1>'.format(
+                G2Q_PREFIX, G2Q_PREFIX))))
 
     # 创建机器人监听线程
     run_bot_server()
@@ -241,9 +249,8 @@ def on_recv():
                 # 将特殊消息内容解析
                 if not re.search(r'\[CQ:at,qq=.+?]', raw_msg) is None:
                     tmp = raw_msg
-                    member_id = re.findall(r'\[CQ:at,qq=.+?]',
-                                           tmp)[0].replace('[CQ:at,qq=',
-                                                           '').replace(']', '')
+                    member_id = re.findall(r'\[CQ:at,qq=.+?]', tmp)[0].replace(
+                        '[CQ:at,qq=', '').replace(']', '')
                     member_nick = json.loads(
                         requests.post(
                             'http://127.0.0.1:5700/get_group_member_info',
